@@ -26,9 +26,9 @@ Las traslaciones permiten avanzar desde una articulación hacia la siguiente, mi
 
 Por lo tanto, el movimiento total del brazo puede representarse como el producto de transformaciones sucesivas.
 
-\[
+$$
 T = T_{01}\,\cdot\,T_{12}\,\cdot\,T_{23}\,\cdot\,T_{34}\,\cdot\,T_{45}
-\]
+$$
 
 donde cada $T_{ij}$ combina una rotación y una traslación entre dos articulaciones consecutivas. 
 
@@ -51,9 +51,21 @@ Teniendo en cuenta que la secuencia de ejes es: **Z - Y - Y - X - Y**
 
 $$
 T_{01} = R_z (\theta_1)  \ T(0,0,h_0) \\
+$$ 
+
+$$
 T_{12} = R_y (\theta_2)  \ T(L_1,0,0) \\
+$$
+
+$$
 T_{23} = R_z (\theta_3)  \ T(L_2,0,0) \\
+$$
+
+$$
 T_{34} = R_z (\theta_4)  \ T(L_3,0,0) \\
+$$
+
+$$
 T_{45} = R_z (\theta_5)  \ T(L_4,0,0) \\
 $$
 
@@ -98,7 +110,7 @@ Para el sistema anticolisiones, es necesario transformar las posiciones locales 
 Cuando el brazo adopta una postura concreta debido a un movimiento de algún servo, las posiciones **reales** de las esferas se obtienen aplicando la cadena de matrices de transformación **acumuladas hasta ese eslabón**.
 
 $$
-c_{i,j}^{glob} = T_{0 \rarr i} \ . \ c_{i,j}^{loc}
+c_{i,j}^{glob} = T_{0 \rightarrow i} \ . \ c_{i,j}^{loc}
 $$
 
 donde: 
