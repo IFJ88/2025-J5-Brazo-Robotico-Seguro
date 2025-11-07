@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Brazo Robótico</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            max-width: 300px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .joint-control {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .joint-control:last-child {
+            border-bottom: none;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .angle-value {
+            display: inline-block;
+            width: 40px;
+            text-align: right;
+        }
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+</head>
+<body>
+    <div id="container">
+        <div id="ui">
+            <h2>Brazo Robótico</h2>
+            <div id="joint-controls">
+                <!-- Los controles de articulaciones se generarán dinámicamente -->
+            </div>
+            <button id="reset-btn">Resetear Ángulos</button>
+        </div>
+    </div>
+    <script type="module" src="./main.js"></script>
+</body>
+</html>

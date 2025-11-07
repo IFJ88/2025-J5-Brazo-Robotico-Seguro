@@ -80,4 +80,4 @@ for k, V_fin in enumerate(VECTORES_DE_MOVIMIENTO):
 #     print(f"Eslabón {i}: {len(esl)} esferas. Longitud aprox: {np.linalg.norm(esl[-1]):.2f}")
 
 # --- Parámetros de Simulación ---
-MODO_DINAMICO = False
+MODO_DINAMICO = True 
