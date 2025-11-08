@@ -4,12 +4,40 @@ import numpy as np
 import math
 
 # --- Funciones de Álgebra Lineal ---
-def matriz_rotacion_z(angulo_grados):
-    """Genera la matriz de rotación 4x4 alrededor del eje Z."""
+def matriz_rotacion_x(angulo_grados):
+    """Rotación 4x4 alrededor del eje X."""
     angulo_rad = math.radians(angulo_grados)
-    c = np.cos(angulo_rad)
-    s = np.sin(angulo_rad)
-    R = np.array([[c, -s, 0, 0], [s, c, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    c, s = np.cos(angulo_rad), np.sin(angulo_rad)
+    R = np.array([
+        [1, 0,  0, 0],
+        [0, c, -s, 0],
+        [0, s,  c, 0],
+        [0, 0,  0, 1]
+    ])
+    return R
+
+def matriz_rotacion_y(angulo_grados):
+    """Rotación 4x4 alrededor del eje Y."""
+    angulo_rad = math.radians(angulo_grados)
+    c, s = np.cos(angulo_rad), np.sin(angulo_rad)
+    R = np.array([
+        [ c, 0, s, 0],
+        [ 0, 1, 0, 0],
+        [-s, 0, c, 0],
+        [ 0, 0, 0, 1]
+    ])
+    return R
+
+def matriz_rotacion_z(angulo_grados):
+    """Rotación 4x4 alrededor del eje Z."""
+    angulo_rad = math.radians(angulo_grados)
+    c, s = np.cos(angulo_rad), np.sin(angulo_rad)
+    R = np.array([
+        [c, -s, 0, 0],
+        [s,  c, 0, 0],
+        [0,  0, 1, 0],
+        [0,  0, 0, 1]
+    ])
     return R
 
 def matriz_traslacion(tx, ty, tz):

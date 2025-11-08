@@ -3,7 +3,7 @@
 import numpy as np
 
 # Importar las funciones y constantes de los módulos
-from configuracion import RADIO_ESFERA, esferas_local, ANGULO_FIJO_ESLABON_0, ANGULO_FIJO_ESLABON_1, ANGULO_FIJO_ESLABON_2, ANGULO_FIJO_ESLABON_3, ANGULO_FIJO_ESLABON_4, MODO_DINAMICO, ANGULOS_E1, ANGULOS_E2, ANGULOS_E4,min_angulos,max_angulos
+from configuracion import RADIO_ESFERA, esferas_local, ANGULO_FIJO_ESLABON_0, ANGULO_FIJO_ESLABON_1, ANGULO_FIJO_ESLABON_2, ANGULO_FIJO_ESLABON_3, ANGULO_FIJO_ESLABON_4, MODO_DINAMICO, ANGULOS_E0, ANGULOS_E1, ANGULOS_E2, ANGULOS_E3, ANGULOS_E4,min_angulos,max_angulos
 from cinematica import calcular_configuracion_modular, validador_limites_fisico
 from visualizacion import (
     inicializar_visualizacion, 
@@ -40,44 +40,60 @@ def main():
         print("Modo de visualización: PLOT ÚNICO (una ventana por paso).")
         visualizar_plot_unico(esferas_base, angulos_base, centros_colisionantes, esferas_base)
         
+
+    # ... (FASE 0 - Rotación Secuencial del Eslabón 0) ...
+
+    print("\n\n--- FASE 0: Rotación Secuencial del Eslabón 0 (0° a 180°) ---")
+    resultados_colision_E0 = {}
+
+    for angulo_0 in ANGULOS_E0:
+        angulo_0 = round(angulo_0, 2)
+        
+        if (validador_limites_fisico( angulo_0, min_angulos[0], max_angulos[0])):
+          print("Ángulo fuera de los límites físicos permitidos.")
+          break
+        
+        angulos_prueba_e0 = np.array([angulo_0, ANGULO_FIJO_ESLABON_1, ANGULO_FIJO_ESLABON_2, ANGULO_FIJO_ESLABON_3, ANGULO_FIJO_ESLABON_4])
+
+        esf_rotado, colision, centros_colisionantes = calcular_configuracion_modular(angulos_prueba_e0, esferas_local, RADIO_ESFERA)
+        
+        resultados_colision_E0[ angulo_0] = "SI" if colision else "NO"
+        
+        print(f"\nProbando Eslabón 1 en { angulo_0}°: Colisión = { resultados_colision_E0[ angulo_0]}") 
+        
+        # 🔑 LÓGICA CONDICIONAL DE ACTUALIZACIÓN
+        if MODO_DINAMICO:
+            actualizar_visualizacion_dinamica(esf_rotado, angulos_prueba_e0, centros_colisionantes)
+        else:
+            visualizar_plot_unico(esf_rotado, angulos_prueba_e0, centros_colisionantes, esferas_base)
+    
+    # ... (FASE 1 - Rotación Secuencial del Eslabón 1) ...
+
+    print("\n\n--- FASE 1: Rotación Secuencial del Eslabón 1 (0° a 180°) ---")
     resultados_colision_E1 = {}
 
-    max_angulo_e1 = 135
-    
-    min_angulo_e1 = 0
-
-    # ... (FASE 1 - Rotación Secuencial del Eslabón 1) ...
     for angulo_1 in ANGULOS_E1:
         angulo_1 = round(angulo_1, 2)
-
-        # validador_físico
         
+        if (validador_limites_fisico( angulo_1, min_angulos[1], max_angulos[1])):
+          print("Ángulo fuera de los límites físicos permitidos.")
+          break
         
-        if (validador_limites_fisico(angulo_1, min_angulos[1], max_angulos[1])):
-            print("Ángulo fuera de los límites físicos permitidos.")
-            break
+        angulos_prueba_e1 = np.array([ANGULO_FIJO_ESLABON_0, angulo_1, ANGULO_FIJO_ESLABON_2, ANGULO_FIJO_ESLABON_3, ANGULO_FIJO_ESLABON_4])
 
-        print(f"angulo_1: {angulo_1}")
-
-        angulos_prueba_e1 = np.array([
-            ANGULO_FIJO_ESLABON_0,
-            angulo_1,
-            ANGULO_FIJO_ESLABON_2,
-            ANGULO_FIJO_ESLABON_3,
-            ANGULO_FIJO_ESLABON_4
-        ])
-
-        esf_rotado, colision, centros_colisionantes = calcular_configuracion_modular(
-            angulos_prueba_e1, esferas_local, RADIO_ESFERA
-        )
-
-        resultados_colision_E1[angulo_1] = "SI" if colision else "NO"
-        print(f"Colisión = {resultados_colision_E1[angulo_1]}")
+        esf_rotado, colision, centros_colisionantes = calcular_configuracion_modular(angulos_prueba_e1, esferas_local, RADIO_ESFERA)
         
+        resultados_colision_E1[ angulo_1] = "SI" if colision else "NO"
+        
+        print(f"\nProbando Eslabón 1 en { angulo_1}°: Colisión = {resultados_colision_E1[ angulo_1]}") 
+        
+        # 🔑 LÓGICA CONDICIONAL DE ACTUALIZACIÓN
         if MODO_DINAMICO:
             actualizar_visualizacion_dinamica(esf_rotado, angulos_prueba_e1, centros_colisionantes)
         else:
             visualizar_plot_unico(esf_rotado, angulos_prueba_e1, centros_colisionantes, esferas_base)
+
+
     # --- FASE 2: Rotación Secuencial del Eslabón 2 ---
     print("\n--- FASE 2: Rotación Secuencial del Eslabón 2 (0° a 180°) ---")
     resultados_colision_E2 = {}
@@ -107,7 +123,33 @@ def main():
 
     # ... (FASE 3 - Rotación Secuencial del Eslabón 3) ...
 
-    print("\n\n--- FASE 3: Rotación Secuencial del Eslabón 3 (0° a 180°, E2 fijo) ---")
+    print("\n\n--- FASE 3: Rotación Secuencial del Eslabón 3 (0° a 180°) ---")
+    resultados_colision_E3 = {}
+
+    for angulo_3 in ANGULOS_E3:
+        angulo_3 = round(angulo_3, 2)
+        
+        if (validador_limites_fisico(angulo_3, min_angulos[3], max_angulos[3])):
+          print("Ángulo fuera de los límites físicos permitidos.")
+          break
+        
+        angulos_prueba_e3 = np.array([ANGULO_FIJO_ESLABON_0, ANGULO_FIJO_ESLABON_1, ANGULO_FIJO_ESLABON_2, angulo_3, ANGULO_FIJO_ESLABON_4])
+
+        esf_rotado, colision, centros_colisionantes = calcular_configuracion_modular(angulos_prueba_e3, esferas_local, RADIO_ESFERA)
+        
+        resultados_colision_E3[angulo_3] = "SI" if colision else "NO"
+        
+        print(f"\nProbando Eslabón 3 en {angulo_3}°: Colisión = {resultados_colision_E3[angulo_3]}") 
+        
+        # 🔑 LÓGICA CONDICIONAL DE ACTUALIZACIÓN
+        if MODO_DINAMICO:
+            actualizar_visualizacion_dinamica(esf_rotado, angulos_prueba_e3, centros_colisionantes)
+        else:
+            visualizar_plot_unico(esf_rotado, angulos_prueba_e3, centros_colisionantes, esferas_base)
+
+    # ... (FASE 4 - Rotación Secuencial del Eslabón 4) ...
+
+    print("\n\n--- FASE 4: Rotación Secuencial del Eslabón 4 (0° a 180°) ---")
     resultados_colision_E4 = {}
 
     for angulo_4 in ANGULOS_E4:
@@ -130,7 +172,6 @@ def main():
             actualizar_visualizacion_dinamica(esf_rotado, angulos_prueba_e4, centros_colisionantes)
         else:
             visualizar_plot_unico(esf_rotado, angulos_prueba_e4, centros_colisionantes, esferas_base)
-
 
     # --- Finalización ---
     if MODO_DINAMICO:

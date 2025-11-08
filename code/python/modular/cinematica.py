@@ -2,7 +2,7 @@
 
 import numpy as np
 from configuracion import T_BASE_GLOBAL
-from algebra_lineal import matriz_rotacion_z, matriz_traslacion, aplicar_transformada
+from algebra_lineal import matriz_rotacion_x, matriz_rotacion_y, matriz_rotacion_z, matriz_traslacion, aplicar_transformada
 
 # --- Lógica de Detección de Colisión ---
 
@@ -87,51 +87,43 @@ def calcular_configuracion_modular(angulos_grados, esferas_locales, radio):
         tuple: (esferas_globales, colision, centros_colisionantes)
     """
     
+    # Rotaciones fijas previas para alinear el eje físico de cada servo con Z
+    Rfix = [
+        np.eye(4),                 # Servo 0: ya es Z
+        matriz_rotacion_x(90),     # Servo 1: Y -> Z
+        np.eye(4),                 # Servo 2: Y -> Z MANTIENE EL EJE DEL SERVO ANTERIOR DADO QUE ES EL MISMO
+        matriz_rotacion_y(-90),    # Servo 3: X -> Z
+        matriz_rotacion_y(90),     # Servo 4: Y -> Z
+    ]
+
     # Lista para almacenar las coordenadas globales de cada eslabón
     esferas_globales = []
+
+    # Pose acumulada del marco de la junta 0 (base)
+    M_acum = matriz_traslacion(T_BASE_GLOBAL[0], T_BASE_GLOBAL[1], T_BASE_GLOBAL[2])
     
     # Iteramos sobre todos los eslabones (las juntas)
     for i, angulo in enumerate(angulos_grados):
-        
-        # 1. Rotación Local
-        # La rotación R_local se aplica a las coordenadas del eslabón, 
-        # que están definidas en su marco local (0,0,0)
-        M_rot_local = matriz_rotacion_z(angulo)
-        
-        # 2. Traslación a la Junta Anterior (calculando T_junta)
-        if i == 0:
-            # Eslabón 1: La junta está en T_BASE_GLOBAL (0,0,0)
-            M_tras_junta = matriz_traslacion(T_BASE_GLOBAL[0], T_BASE_GLOBAL[1], T_BASE_GLOBAL[2])
-            
-        else:
-            # Eslabones subsiguientes: La junta anterior es la última esfera del eslabón anterior
-            # P_union_anterior es la última esfera del eslabón i-1
-            P_union_anterior = esferas_globales[-1][-1]
-            
-            # Traslación a esta posición global de la junta
-            M_tras_junta = matriz_traslacion(P_union_anterior[0], P_union_anterior[1], P_union_anterior[2])
-            
-        # 3. Transformada Global
-        # M_actual = T_junta * R_local * T_eslabon_base_local(ya implícita en la definición local)
-        # T_junta lleva el origen local (0,0,0) a la posición global de la junta.
-        # R_local rota el eslabón *después* de haber sido colocado en la junta.
-        M_actual = M_tras_junta @ M_rot_local
-        
-        
-        # 4. Aplicar Transformada a las Esferas Locales del Eslabón i
-        esferas_global_i = np.array([
-            aplicar_transformada(M_actual, esfera_local) 
-            for esfera_local in esferas_locales[i]
+        # Marco del eslabón i: hereda orientación del padre
+        M_link = M_acum @ Rfix[i] @ matriz_rotacion_z(angulo)
+
+        # Transformar las esferas locales del eslabón i con M_link
+        esf_global_i = np.array([
+            aplicar_transformada(M_link, p_local)
+            for p_local in esferas_locales[i]
         ])
-        
-        # Guardar la configuración global del eslabón actual
-        esferas_globales.append(esferas_global_i)
-        
-    # 5. Detección de Colisión Total
+        esferas_globales.append(esf_global_i)
+
+        # Actualizar M_acum al marco de la próxima junta:
+        # trasladarse desde el origen del eslabón i al punto final DEL ES6LABÓN i, en su marco local
+        if len(esferas_locales[i]) > 0:
+            p_end_local = esferas_locales[i][-1]            # (dx, dy, dz) local del fin de eslabón
+            M_acum = M_link @ matriz_traslacion(*p_end_local)
+        else:
+            # si no hubiese puntos, no avanzamos
+            M_acum = M_link
+
     colision, centros_colisionantes = detectar_colision_total_modular(esferas_globales, radio)
-    
-    print(f"Número de eslabones procesados: {len(esferas_globales)}")
-    
     return esferas_globales, colision, centros_colisionantes
 
 def validador_limites_fisico(angulo, min_angulo, max_angulo):

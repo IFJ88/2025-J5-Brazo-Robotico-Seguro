@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 # Importar las constantes de configuración
-from configuracion import RADIO_ESFERA, T_BASE_GLOBAL
+from configuracion import RADIO_ESFERA, T_BASE_GLOBAL, set_view
 
 # Diccionarios globales para almacenar referencias a los objetos gráficos (solo para modo dinámico)
 _plot_references = {'scatters': [], 'lines': [], 'juntas': [], 'ax': None}
@@ -33,7 +33,7 @@ def inicializar_visualizacion(N_eslabones, esferas_iniciales_list=None):
     _plot_references['juntas'] = []
     _plot_references['ax'] = ax
 
-    ax.view_init(elev=90, azim=-90) 
+    set_view(ax, 'xz_rotada')
     ax.dist = 8 
     
     all_coords = []
@@ -131,11 +131,11 @@ def actualizar_visualizacion_dinamica(esferas_globales_list, angulos_list, centr
         ax.set_ylim([-max_range, max_range])
         ax.set_zlim([-max_range, max_range]) 
     
-    angulos_titulo = " | ".join([f'E{i+1}: {ang:.1f}°' for i, ang in enumerate(angulos_list)])
+    angulos_titulo = " | ".join([f'E{i}: {ang:.1f}°' for i, ang in enumerate(angulos_list)])
     ax.set_title(f'Rotaciones: {angulos_titulo} | Colisión: {"SI" if colision_global else "NO"}')
 
     plt.draw()
-    plt.pause(0.5) 
+    plt.pause(2) 
 
 def finalizar_visualizacion():
     """Deja la ventana de plot abierta al finalizar la simulación."""
@@ -166,7 +166,7 @@ def visualizar_plot_unico(esferas_globales_list, angulos_list, centros_colisiona
     colision_global = bool(centros_colisionantes_global)
     
     # Fijar la vista para el plano XY
-    ax.view_init(elev=90, azim=-90)
+    set_view(ax, 'xz_rotada')
     ax.dist = 8
 
     # --- 1. Dibujar Posición Inicial (Gris) ---

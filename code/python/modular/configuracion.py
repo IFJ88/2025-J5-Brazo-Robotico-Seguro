@@ -19,8 +19,8 @@ ANGULOS_E2 = np.linspace(0, 180, 5) # 5 pasos por defecto
 ANGULOS_E3 = np.linspace(0, 180, 5) # 5 pasos por defecto
 ANGULOS_E4 = np.linspace(0, 180, 5) # 5 pasos por defecto
 
-min_angulos = np.array([-1, 0, 0, -1,0])
-max_angulos = np.array([-1, 135, 170, -1, 170])
+min_angulos = np.array([0, 0, 0, -1,0])
+max_angulos = np.array([170, 135, 170, -1, 170])
 
 # --- 2. VECTORES DE DESPLAZAMIENTO (FIN DEL ESLABÓN EN EL MARCO LOCAL) ---
 
@@ -28,11 +28,11 @@ max_angulos = np.array([-1, 135, 170, -1, 170])
 # Usaremos tres esferas para representar el cuerpo: Inicio, Medio, Fin.
 
 # [0] Eslabón 0: Desde (0,0,0) hasta (0,0, 3.7) [Vector Z]
-V_0 = np.array([3.7, 0.0, 0.0])
+V_0 = np.array([0.0, 0.0, 3.7])
 L_0 = np.linalg.norm(V_0) # Longitud: 3.7 cm
 
 # [1] Eslabón 1: Desde junta 0 hasta (0, 2.3, 1.5) [Vector YZ]
-V_1 = np.array([1.5, 2.3, 0.0])
+V_1 = np.array([0.0, 2.3, 1.5])
 L_1 = np.linalg.norm(V_1) # Longitud: 2.75 cm
 
 # [2] Eslabón 2: Desde junta 1 hasta (6.9, 0, 0.2) [Vector X]
@@ -68,7 +68,7 @@ for k, V_fin in enumerate(VECTORES_DE_MOVIMIENTO):
     
     # Si la longitud es pequeña, usamos solo dos esferas (Inicio y Fin)
     if np.linalg.norm(V_fin) < 4 * RADIO_ESFERA:
-         esf_array = np.array([P_inicio, P_fin])
+         esf_array = np.array([P_inicio, P_fin])   
     # Si la longitud es grande, usamos tres esferas (Inicio, Medio, Fin)
     else:
          esf_array = np.array([P_inicio, P_medio, P_fin])
@@ -81,3 +81,15 @@ for k, V_fin in enumerate(VECTORES_DE_MOVIMIENTO):
 
 # --- Parámetros de Simulación ---
 MODO_DINAMICO = True 
+
+def set_view(ax, plane='xy'):
+    if plane == 'xy':      # vista superior
+        ax.view_init(elev=90, azim=-90)
+    elif plane == 'yz':    # vista lateral (X hacia el observador)
+        ax.view_init(elev=0, azim=90)
+    elif plane == 'xz':    # vista frontal (Y hacia el observador)
+        ax.view_init(elev=0, azim=0)
+    elif plane == 'xz_rotada':
+        ax.view_init(elev=0, azim=270)
+    else:
+        ax.view_init(elev=20, azim=-35)  # isométrica por defecto
