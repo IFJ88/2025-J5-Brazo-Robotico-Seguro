@@ -72,7 +72,15 @@ def detectar_colision_total_modular(esferas_globales, radio):
     return bool(centros_colisionantes_global), centros_colisionantes_global
 
 
-# --- Lógica Cinemática Principal ---
+# --- Función principal: cinemática directa ---
+# Entrada
+# - angulos_grados:
+# - esferas_locales:  (de configuracion.py)
+# - radio: 
+# Salida
+# - esferas_globales: lista de posiciones 3d finales de las esferas
+# - colision: booleano si hay colisión
+# - centros_colisionantes: lista de esferas que chocan
 
 def calcular_configuracion_modular(angulos_grados, esferas_locales, radio):
     """
@@ -99,30 +107,31 @@ def calcular_configuracion_modular(angulos_grados, esferas_locales, radio):
     # Lista para almacenar las coordenadas globales de cada eslabón
     esferas_globales = []
 
-    # Pose acumulada del marco de la junta 0 (base)
+    # Inicializamos la matriz acumulada con la traslación de la base global
     M_acum = matriz_traslacion(T_BASE_GLOBAL[0], T_BASE_GLOBAL[1], T_BASE_GLOBAL[2])
     
     # Iteramos sobre todos los eslabones (las juntas)
     for i, angulo in enumerate(angulos_grados):
-        # Marco del eslabón i: hereda orientación del padre
+        # Matriz que transforma cualquier punto del eslabón i al marco global
         M_link = M_acum @ Rfix[i] @ matriz_rotacion_z(angulo)
 
-        # Transformar las esferas locales del eslabón i con M_link
+        # Obtenemos las posiciones globales de las esferas del eslabón i con M_link
         esf_global_i = np.array([
             aplicar_transformada(M_link, p_local)
             for p_local in esferas_locales[i]
         ])
         esferas_globales.append(esf_global_i)
 
-        # Actualizar M_acum al marco de la próxima junta:
-        # trasladarse desde el origen del eslabón i al punto final DEL ES6LABÓN i, en su marco local
+        # Actualizamos M_acum para que represente la pose del FINAL del eslabón i (que es donde comenzará el i+1 eslabon)
         if len(esferas_locales[i]) > 0:
+            # Obtengo la posición local del fin del eslabón i
             p_end_local = esferas_locales[i][-1]            # (dx, dy, dz) local del fin de eslabón
+            # Le aplico la traslación a M_link para obtener el nuevo M_acum
             M_acum = M_link @ matriz_traslacion(*p_end_local)
         else:
-            # si no hubiese puntos, no avanzamos
             M_acum = M_link
 
+    # Calculamos todas las esferas globales, llamamos a la detección de colisiones
     colision, centros_colisionantes = detectar_colision_total_modular(esferas_globales, radio)
     return esferas_globales, colision, centros_colisionantes
 

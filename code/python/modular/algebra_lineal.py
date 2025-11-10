@@ -40,6 +40,7 @@ def matriz_rotacion_z(angulo_grados):
     ])
     return R
 
+# --> Matriz de traslación 4x4 que traslada un punto
 def matriz_traslacion(tx, ty, tz):
     """Genera la matriz de traslación 4x4."""
     T = np.identity(4)

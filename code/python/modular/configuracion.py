@@ -2,54 +2,52 @@
 
 import numpy as np
 
-# --- 1. CONFIGURACIÓN GENERAL ---
-RADIO_ESFERA = 1.0 # Umbral de colisión 2.0
-T_BASE_GLOBAL = np.array([0, 0, 0])
+# --- 1. CONFIGURACIÓN GENERAL --- #
+RADIO_ESFERA = 1.0 # radio de todas las esferas que componen el robot (cm)
+T_BASE_GLOBAL = np.array([0, 0, 0]) # indica la posición de la base del robot en el marco global
 
-# Fijamos los ángulos de prueba (mantener el formato)
+# Fijamos los ángulos de prueba 
 ANGULO_FIJO_ESLABON_0 = 0
 ANGULO_FIJO_ESLABON_1 = 0 
 ANGULO_FIJO_ESLABON_2 = 0 
 ANGULO_FIJO_ESLABON_3 = 0
 ANGULO_FIJO_ESLABON_4 = 0 
 
-ANGULOS_E0 = np.linspace(0, 180, 5) # 5 pasos por defecto
-ANGULOS_E1 = np.linspace(0, 180, 5) # 5 pasos por defecto
-ANGULOS_E2 = np.linspace(0, 180, 5) # 5 pasos por defecto
-ANGULOS_E3 = np.linspace(0, 180, 5) # 5 pasos por defecto
-ANGULOS_E4 = np.linspace(0, 180, 5) # 5 pasos por defecto
+# Lista de 5 angulos entre 0 y 180 para realizar un barrido/sampling
+ANGULOS_E0 = np.linspace(0, 180, 5) 
+ANGULOS_E1 = np.linspace(0, 180, 5) 
+ANGULOS_E2 = np.linspace(0, 180, 5) 
+ANGULOS_E3 = np.linspace(0, 180, 5) 
 
+# Lista que indica el minimo angulo que puede tomar cada servo
 min_angulos = np.array([0, 0, 0, -1,0])
+# Lista que indica el maximo angulo que puede tomar cada servo
 max_angulos = np.array([170, 135, 170, -1, 170])
 
-# --- 2. VECTORES DE DESPLAZAMIENTO (FIN DEL ESLABÓN EN EL MARCO LOCAL) ---
+# --- 2. VECTORES DE DESPLAZAMIENTO (FIN DEL ESLABÓN EN EL MARCO LOCAL) --- #
 
-# Los eslabones se definen por dos puntos (inicio=junta, fin=longitud)
-# Usaremos tres esferas para representar el cuerpo: Inicio, Medio, Fin.
+# Los vectores V_i definen la posición del punto final de cada eslabón i en su marco local.
+# Las constantes L_i son las longitudes de cada eslabón (norma de V_i).
 
-# [0] Eslabón 0: Desde (0,0,0) hasta (0,0, 3.7) [Vector Z]
 V_0 = np.array([0.0, 0.0, 3.7])
-L_0 = np.linalg.norm(V_0) # Longitud: 3.7 cm
+L_0 = np.linalg.norm(V_0) 
 
-# [1] Eslabón 1: Desde junta 0 hasta (0, 2.3, 1.5) [Vector YZ]
 V_1 = np.array([0.0, 2.3, 1.5])
-L_1 = np.linalg.norm(V_1) # Longitud: 2.75 cm
+L_1 = np.linalg.norm(V_1) 
 
-# [2] Eslabón 2: Desde junta 1 hasta (6.9, 0, 0.2) [Vector X]
 V_2 = np.array([6.9, 0.0, 0.2])
-L_2 = np.linalg.norm(V_2) # Longitud: 6.9 cm
+L_2 = np.linalg.norm(V_2) 
 
-# [3] Eslabón 3: Desde junta 2 hasta (5.7, 3.0, 0) [Vector XY]
 V_3 = np.array([5.7, 3.0, 0.0])
-L_3 = np.linalg.norm(V_3) # Longitud: 6.44 cm
+L_3 = np.linalg.norm(V_3) 
 
-# [4] Eslabón 4: Desde junta 3 hasta (2.2, 2.2, 0) [Vector XY]
+
 V_4 = np.array([2.2, 2.2, 0.0])
-L_4 = np.linalg.norm(V_4) # Longitud: 3.11 cm
+L_4 = np.linalg.norm(V_4) 
 
 # --- 3. CREACIÓN DE ESFERAS LOCALES (Modular) ---
 
-# La matriz de esferas locales debe incluir: [Punto Inicial], [Punto Intermedio], [Punto Final (Junta)]
+# Lista de arrays que contiene las esferas de cada eslabón (posicion local)
 esferas_local = []
 VECTORES_DE_MOVIMIENTO = [V_0, V_1, V_2, V_3, V_4]
 
@@ -75,9 +73,6 @@ for k, V_fin in enumerate(VECTORES_DE_MOVIMIENTO):
 
     esferas_local.append(esf_array)
 
-# --- Verificación Final (Opcional) ---
-# for i, esl in enumerate(esferas_local):
-#     print(f"Eslabón {i}: {len(esl)} esferas. Longitud aprox: {np.linalg.norm(esl[-1]):.2f}")
 
 # --- Parámetros de Simulación ---
 MODO_DINAMICO = True 
