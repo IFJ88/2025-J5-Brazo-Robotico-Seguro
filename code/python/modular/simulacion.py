@@ -28,6 +28,9 @@ def main():
     # --> Se lleva el brazo a la posición base, y se verifica si ya en la posicion base hay colisión.
     esferas_base, colision_base, centros_colisionantes = calcular_configuracion_modular(
         angulos_base, esferas_local, RADIO_ESFERA)
+    
+    print("Esferas locales")
+    print(esferas_local)
 
     if colision_base:
         print(
@@ -41,11 +44,11 @@ def main():
         # Inicializar el plot una sola vez
         inicializar_visualizacion(N_eslabones, esferas_base)
         actualizar_visualizacion_dinamica(
-            esferas_base, angulos_base, centros_colisionantes)
+            esferas_base, angulos_base, centros_colisionantes, eslabon_actual=0)
     else:
         print("Modo de visualización: PLOT ÚNICO (una ventana por paso).")
         visualizar_plot_unico(esferas_base, angulos_base,
-                              centros_colisionantes, esferas_base)
+                              centros_colisionantes, esferas_base, eslabon_actual=0)
 
     
     # ----------- Barrido Secuencial de Ángulos por Eslabón ----------- #
@@ -74,10 +77,10 @@ def main():
 
         if MODO_DINAMICO:
             actualizar_visualizacion_dinamica(
-                esf_rotado, angulos_prueba_e0, centros_colisionantes)
+                esf_rotado, angulos_prueba_e0, centros_colisionantes, eslabon_actual=0)
         else:
             visualizar_plot_unico(
-                esf_rotado, angulos_prueba_e0, centros_colisionantes, esferas_base)
+                esf_rotado, angulos_prueba_e0, centros_colisionantes, esferas_base, eslabon_actual=0)
 
     # --------- FASE 1: Rotación Secuencial del Eslabón 1 --------- #
 
@@ -104,10 +107,10 @@ def main():
 
         if MODO_DINAMICO:
             actualizar_visualizacion_dinamica(
-                esf_rotado, angulos_prueba_e1, centros_colisionantes)
+                esf_rotado, angulos_prueba_e1, centros_colisionantes, eslabon_actual=1)
         else:
             visualizar_plot_unico(
-                esf_rotado, angulos_prueba_e1, centros_colisionantes, esferas_base)
+                esf_rotado, angulos_prueba_e1, centros_colisionantes, esferas_base, eslabon_actual=1)
 
     # --------- FASE 2: Rotación Secuencial del Eslabón 2 --------- #
     
@@ -135,11 +138,11 @@ def main():
 
         if MODO_DINAMICO:
             actualizar_visualizacion_dinamica(
-                esf_rotado, angulos_prueba_e2, centros_colisionantes)
+                esf_rotado, angulos_prueba_e2, centros_colisionantes, eslabon_actual=2)
         else:
             # Usa esferas_base como referencia inicial
             visualizar_plot_unico(
-                esf_rotado, angulos_prueba_e2, centros_colisionantes, esferas_base)
+                esf_rotado, angulos_prueba_e2, centros_colisionantes, esferas_base, eslabon_actual=2)
 
     # --------- FASE 3: Rotación Secuencial del Eslabón 3 --------- #
     
@@ -166,10 +169,10 @@ def main():
 
         if MODO_DINAMICO:
             actualizar_visualizacion_dinamica(
-                esf_rotado, angulos_prueba_e3, centros_colisionantes)
+                esf_rotado, angulos_prueba_e3, centros_colisionantes, eslabon_actual=3)
         else:
             visualizar_plot_unico(
-                esf_rotado, angulos_prueba_e3, centros_colisionantes, esferas_base)
+                esf_rotado, angulos_prueba_e3, centros_colisionantes, esferas_base, eslabon_actual=3)
 
     # --------- FASE 4: Rotación Secuencial del Eslabón 4 --------- #
 
@@ -196,10 +199,10 @@ def main():
 
         if MODO_DINAMICO:
             actualizar_visualizacion_dinamica(
-                esf_rotado, angulos_prueba_e4, centros_colisionantes)
+                esf_rotado, angulos_prueba_e4, centros_colisionantes, eslabon_actual=4)
         else:
             visualizar_plot_unico(
-                esf_rotado, angulos_prueba_e4, centros_colisionantes, esferas_base)
+                esf_rotado, angulos_prueba_e4, centros_colisionantes, esferas_base, eslabon_actual=4)
 
     # --- Finalización ---
     if MODO_DINAMICO:

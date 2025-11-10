@@ -1,7 +1,7 @@
 # cinematica.py
 
 import numpy as np
-from configuracion import T_BASE_GLOBAL
+from configuracion import T_BASE_GLOBAL, SALTO_ESLABONES, OFFSET_ESLABON_EN_JUNTA
 from algebra_lineal import matriz_rotacion_x, matriz_rotacion_y, matriz_rotacion_z, matriz_traslacion, aplicar_transformada
 
 # --- Lógica de Detección de Colisión ---
@@ -112,24 +112,22 @@ def calcular_configuracion_modular(angulos_grados, esferas_locales, radio):
     
     # Iteramos sobre todos los eslabones (las juntas)
     for i, angulo in enumerate(angulos_grados):
-        # Matriz que transforma cualquier punto del eslabón i al marco global
-        M_link = M_acum @ Rfix[i] @ matriz_rotacion_z(angulo)
+        
 
+        # Matriz que transforma cualquier punto del eslabon i al marco global desde el punto del eslabón (después del offset)
+        M_eslabon = M_acum @ Rfix[i] @ matriz_rotacion_z(angulo)
         # Obtenemos las posiciones globales de las esferas del eslabón i con M_link
         esf_global_i = np.array([
-            aplicar_transformada(M_link, p_local)
+            aplicar_transformada(M_eslabon, p_local)
             for p_local in esferas_locales[i]
         ])
         esferas_globales.append(esf_global_i)
+        print(f"valor de i {i}°")
+        # Actualizamos M_acum para que represente la pose del FINAL de la junta i 
+        vector_desplazamiento = SALTO_ESLABONES[i]
+        # Le aplico la traslación a M_link para obtener el nuevo M_acum
+        M_acum = M_eslabon @ matriz_traslacion(*vector_desplazamiento)
 
-        # Actualizamos M_acum para que represente la pose del FINAL del eslabón i (que es donde comenzará el i+1 eslabon)
-        if len(esferas_locales[i]) > 0:
-            # Obtengo la posición local del fin del eslabón i
-            p_end_local = esferas_locales[i][-1]            # (dx, dy, dz) local del fin de eslabón
-            # Le aplico la traslación a M_link para obtener el nuevo M_acum
-            M_acum = M_link @ matriz_traslacion(*p_end_local)
-        else:
-            M_acum = M_link
 
     # Calculamos todas las esferas globales, llamamos a la detección de colisiones
     colision, centros_colisionantes = detectar_colision_total_modular(esferas_globales, radio)

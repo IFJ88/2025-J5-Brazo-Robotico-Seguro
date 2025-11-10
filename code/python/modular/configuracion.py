@@ -1,6 +1,7 @@
 # --- configuracion.py (Estructura Ajustada a sus Puntos) ---
 
 import numpy as np
+from algebra_lineal import matriz_traslacion
 
 # --- 1. CONFIGURACIÓN GENERAL --- #
 RADIO_ESFERA = 1.0 # radio de todas las esferas que componen el robot (cm)
@@ -18,6 +19,7 @@ ANGULOS_E0 = np.linspace(0, 180, 5)
 ANGULOS_E1 = np.linspace(0, 180, 5) 
 ANGULOS_E2 = np.linspace(0, 180, 5) 
 ANGULOS_E3 = np.linspace(0, 180, 5) 
+ANGULOS_E4 = np.linspace(0, 180, 5)
 
 # Lista que indica el minimo angulo que puede tomar cada servo
 min_angulos = np.array([0, 0, 0, -1,0])
@@ -29,53 +31,60 @@ max_angulos = np.array([170, 135, 170, -1, 170])
 # Los vectores V_i definen la posición del punto final de cada eslabón i en su marco local.
 # Las constantes L_i son las longitudes de cada eslabón (norma de V_i).
 
-V_0 = np.array([0.0, 0.0, 3.7])
-L_0 = np.linalg.norm(V_0) 
+SALTO_0 = np.array([0.0, 0.0, 3.7])  # Salto del eslabón base
+# SALTO_1 = np.array([2.3, 0.0, 1.5])  # Salto del eslabón 1
+SALTO_1 = np.array([-2.3, 1.5, 0.0])  # Salto del eslabón 1
+# SALTO_2 = np.array([6.9, 0.0, 0.0])  # Salto del eslabón 2
+SALTO_2 = np.array([6.9, 0.0, 0.0])  # Salto del eslabón 2
+# SALTO_3 = np.array([5.7, 3.0, 0.0])  # Salto del eslabón 3
+SALTO_3 = np.array([0.0, 3.0, -3.0])
+# SALTO_4 = np.array([2.2, 0, 0])  # Salto del eslabón 4 (herramienta)
+SALTO_4 = np.array([0.0, 0.0, 2.0])
 
-V_1 = np.array([0.0, 2.3, 1.5])
-L_1 = np.linalg.norm(V_1) 
-
-V_2 = np.array([6.9, 0.0, 0.2])
-L_2 = np.linalg.norm(V_2) 
-
-V_3 = np.array([5.7, 3.0, 0.0])
-L_3 = np.linalg.norm(V_3) 
-
-
-V_4 = np.array([2.2, 2.2, 0.0])
-L_4 = np.linalg.norm(V_4) 
-
+SALTO_ESLABONES = [SALTO_0, SALTO_1, SALTO_2, SALTO_3, SALTO_4]
 # --- 3. CREACIÓN DE ESFERAS LOCALES (Modular) ---
 
 # Lista de arrays que contiene las esferas de cada eslabón (posicion local)
-esferas_local = []
-VECTORES_DE_MOVIMIENTO = [V_0, V_1, V_2, V_3, V_4]
+esf_0 = np.array([
+    [0.0, 0.0, 0.0]  # Esfera en la base
+])
 
-for k, V_fin in enumerate(VECTORES_DE_MOVIMIENTO):
-    # Punto de inicio (Junta)
-    P_inicio = np.array([0.0, 0.0, 0.0])
-    
-    # Punto final (Nueva junta)
-    P_fin = V_fin
-    
-    # Punto intermedio (Usamos el punto medio para asegurar cobertura, si es necesario)
-    P_medio = V_fin / 2.0 
-    
-    # Creamos un array que contiene las tres esferas: Inicio, Medio, Fin
-    # NOTA: Puede ajustar el número de puntos según la longitud del eslabón (L_k)
-    
-    # Si la longitud es pequeña, usamos solo dos esferas (Inicio y Fin)
-    if np.linalg.norm(V_fin) < 4 * RADIO_ESFERA:
-         esf_array = np.array([P_inicio, P_fin])   
-    # Si la longitud es grande, usamos tres esferas (Inicio, Medio, Fin)
-    else:
-         esf_array = np.array([P_inicio, P_medio, P_fin])
+# Eslabón 1: Solo una esfera en el "codo" (que no es el final)
+esf_1 = np.array([
+    [0.0, 0.0, 0.0],
+    [-2.0, 1.5, 0.0]
+])
 
-    esferas_local.append(esf_array)
+# Eslabón 2: Tres esferas (inicio, medio, fin)
+esf_2 = np.array([
+    [0.0, 0.0, 0.0],
+    [4.0, 0.0, 0.0]
+])
 
+# Eslabón 3: Sin esferas de colisión
+esf_3 = np.array([[0.0, 0.0, 0.0]])
+
+# Eslabón 4: Una esfera al final
+esf_4 = np.array([
+    [0, 0.0, 0.0],
+    [2.0, 0.0, 0.0]
+])
+
+esferas_local = [esf_0, esf_1, esf_2, esf_3, esf_4]
+
+
+# --- 4. Creacion de vectores OFFSET que llevan de la posicion del servo con la posición del eslabón ---
+
+T_E0 = np.eye(4)  # Matriz identidad, sin offset
+T_E1 = matriz_traslacion(0,2.3, 1.5)
+T_E2 = np.eye(4)
+T_E3 = matriz_traslacion(0, 2.3, 1.5)
+T_E4 = matriz_traslacion(0, 2.2, 0.0)
+
+OFFSET_ESLABON_EN_JUNTA = [T_E0, T_E1, T_E2, T_E3, T_E4]
 
 # --- Parámetros de Simulación ---
-MODO_DINAMICO = True 
+MODO_DINAMICO = True
 
 def set_view(ax, plane='xy'):
     if plane == 'xy':      # vista superior

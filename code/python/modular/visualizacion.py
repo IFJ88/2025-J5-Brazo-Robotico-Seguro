@@ -69,7 +69,7 @@ def inicializar_visualizacion(N_eslabones, esferas_iniciales_list=None):
     
     return fig, ax
 
-def actualizar_visualizacion_dinamica(esferas_globales_list, angulos_list, centros_colisionantes_global):
+def actualizar_visualizacion_dinamica(esferas_globales_list, angulos_list, centros_colisionantes_global, eslabon_actual):
     """Actualiza los datos de los objetos gráficos existentes en el plot."""
     # [Mantener el código de actualizar_visualizacion sin cambios, renombrado a actualizar_visualizacion_dinamica]
     ax = _plot_references['ax']
@@ -132,10 +132,10 @@ def actualizar_visualizacion_dinamica(esferas_globales_list, angulos_list, centr
         ax.set_zlim([-max_range, max_range]) 
     
     angulos_titulo = " | ".join([f'E{i}: {ang:.1f}°' for i, ang in enumerate(angulos_list)])
-    ax.set_title(f'Rotaciones: {angulos_titulo} | Colisión: {"SI" if colision_global else "NO"}')
+    ax.set_title(f'Eslabon Movimiento: {eslabon_actual} | Rotaciones: {angulos_titulo} | Colisión: {"SI" if colision_global else "NO"}')
 
     plt.draw()
-    plt.pause(2) 
+    plt.pause(1) 
 
 def finalizar_visualizacion():
     """Deja la ventana de plot abierta al finalizar la simulación."""
@@ -148,7 +148,7 @@ def finalizar_visualizacion():
 # 🎯 MODO PLOT ÚNICO (Función para crear un nuevo plot por paso)
 # ----------------------------------------------
 
-def visualizar_plot_unico(esferas_globales_list, angulos_list, centros_colisionantes_global, esferas_iniciales_list=None):
+def visualizar_plot_unico(esferas_globales_list, angulos_list, centros_colisionantes_global, esferas_iniciales_list=None, eslabon_actual=None):
     """
     Dibuja N eslabones, creando un nuevo plot (ventana) para cada llamada.
     """
@@ -232,6 +232,6 @@ def visualizar_plot_unico(esferas_globales_list, angulos_list, centros_colisiona
     
     # Título
     angulos_titulo = " | ".join([f'E{i+1}: {ang:.1f}°' for i, ang in enumerate(angulos_list)])
-    ax.set_title(f'Rotaciones: {angulos_titulo} | Colisión: {"SI" if colision_global else "NO"}')
+    ax.set_title(f'Eslabon Movimiento: {eslabon_actual} | Rotaciones: {angulos_titulo} | Colisión: {"SI" if colision_global else "NO"}')
 
     plt.show() # Bloquea la ejecución hasta que se cierre, o se abre una ventana por frame
