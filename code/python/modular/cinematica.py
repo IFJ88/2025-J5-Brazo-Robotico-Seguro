@@ -1,7 +1,7 @@
 # cinematica.py
 
 import numpy as np
-from configuracion import T_BASE_GLOBAL, SALTO_ESLABONES, OFFSET_ESLABON_EN_JUNTA
+from configuracion import T_BASE_GLOBAL, SALTO_ESLABONES, OFFSET_ESLABON_EN_JUNTA, MATRIZ_COLISIONES
 from algebra_lineal import matriz_rotacion_x, matriz_rotacion_y, matriz_rotacion_z, matriz_traslacion, aplicar_transformada
 
 # --- Lógica de Detección de Colisión ---
@@ -11,6 +11,33 @@ def verificar_distancia(centro_a, centro_b, radio, tol=1e-9):
     distancia = np.linalg.norm(centro_a - centro_b)
     # Colisión ocurre si distancia <= 2 * RADIO_ESFERA
     return distancia <= 2.0 * radio + tol
+
+def detectar_colision_plano_base(esferas_globales, radio, plano_z=0.0):
+    """
+    Detecta si alguna esfera colisiona con el plano base (Z = plano_z).
+    La colisión ocurre si el borde inferior de la esfera toca o cruza el plano.
+    """
+    centros_colisionantes_plano = set()
+    colision_detectada = False
+
+    # Itera sobre los eslabones, comenzando desde el índice 1 (el segundo eslabón físico)
+    # El eslabón 0 (la base o el primer link) se omite intencionalmente.
+    for esf_eslabon in esferas_globales[1:]:
+        # Itera sobre cada esfera en ese eslabón
+        for centro in esf_eslabon:
+            # Una colisión con el plano Z=0 ocurre si la coordenada Z del centro
+            # es menor o igual al radio (centro.z <= radio).
+            # El índice 2 es la coordenada Z en un vector (x, y, z, 1).
+            z_centro = centro[2]
+            
+            # Usamos una pequeña tolerancia (como np.finfo(float).eps)
+            # para comparar flotantes si es necesario, pero generalmente 
+            # z_centro <= radio es suficiente.
+            if z_centro <= radio:
+                colision_detectada = True
+                centros_colisionantes_plano.add(tuple(centro))
+
+    return colision_detectada, centros_colisionantes_plano
 
     
 def detectar_colision_par(esf_a, esf_b, idx_ignore_1, idx_ignore_2, radio):
@@ -47,9 +74,9 @@ def detectar_colision_total_modular(esferas_globales, radio):
         for j in range(i + 1, num_eslabones):
             
             ## <---- ACA SE TIENE QUE PONER LA CONDICION DE LA MATRIZ DE COLISIONES ---> ## 
-            ## if (matriz_colisiones[i][j] == 0):  ##
-            ## continue  ##
-            ## else ##
+            # if MATRIZ_COLISIONES[i, j] == 0:
+            #     print(f"Omitiendo chequeo entre Eslabón {i} y Eslabón {j} (MATRIZ_COLISIONES[i, j] = 0)")
+            #     continue
             
             esf_i = esferas_globales[i]
             esf_j = esferas_globales[j]
@@ -133,10 +160,24 @@ def calcular_configuracion_modular(angulos_grados, esferas_locales, radio):
         # Le aplico la traslación para obtener el nuevo M_acum
         M_acum = M_eslabon @ matriz_traslacion(*vector_desplazamiento)
 
+    # 1. Detección de Colisión entre Eslabones (Tu lógica existente)
+    colision_interna, centros_colisionantes_internos = detectar_colision_total_modular(
+        esferas_globales, radio)
+    
+    # 2. Detección de Colisión contra el Plano Base (NUEVO)
+    colision_plano, centros_colisionantes_plano = detectar_colision_plano_base(
+        esferas_globales, radio, plano_z=0.0) # plano_z es 0 por defecto
 
-    # Calculamos todas las esferas globales, llamamos a la detección de colisiones
-    colision, centros_colisionantes = detectar_colision_total_modular(esferas_globales, radio)
-    return esferas_globales, colision, centros_colisionantes
+    # 3. Combinación de Resultados
+    
+    # El robot colisiona si hay colisión interna O colisión con el plano.
+    colision_total = colision_interna or colision_plano
+    
+    # Combinamos los sets de centros colisionantes para la visualización
+    centros_colisionantes_global = centros_colisionantes_internos.union(
+        centros_colisionantes_plano)
+
+    return esferas_globales, colision_total, centros_colisionantes_global
 
 def validador_limites_fisico(angulo, min_angulo, max_angulo):
     """

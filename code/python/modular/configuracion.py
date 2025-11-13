@@ -7,6 +7,18 @@ from algebra_lineal import matriz_traslacion
 RADIO_ESFERA = 1.0 # radio de todas las esferas que componen el robot (cm)
 T_BASE_GLOBAL = np.array([0, 0, 0]) # indica la posición de la base del robot en el marco global
 
+# --- Matriz de Colisiones ---
+# Los índices i, j corresponden al Eslabón i y Eslabón j (0-indexado).
+# 1 -> Colisionan; 0 -> No colisionan
+MATRIZ_COLISIONES = np.array([
+    [ 0, 0, 0, 0, 1], # Eslabón 0
+    [ 0, 0, 0, 0, 1], # Eslabón 1
+    [ 0, 0, 0, 1, 0], # Eslabón 2
+    [ 0, 0, 1, 0, 0], # Eslabón 3
+    [ 1, 1, 0, 0, 0]  # Eslabón 4
+])
+
+
 # Fijamos los ángulos de prueba 
 ANGULO_FIJO_ESLABON_0 = 0
 ANGULO_FIJO_ESLABON_1 = 0 
@@ -89,7 +101,7 @@ T_E4 = matriz_traslacion(0, 2.2, 0.0)
 OFFSET_ESLABON_EN_JUNTA = [T_E0, T_E1, T_E2, T_E3, T_E4]
 
 # --- Parámetros de Simulación ---
-MODO_DINAMICO = False
+MODO_DINAMICO = True
 
 def set_view(ax, plane='xy'):
     if plane == 'xy':      # vista superior
