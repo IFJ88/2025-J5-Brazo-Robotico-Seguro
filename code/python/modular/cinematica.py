@@ -46,6 +46,11 @@ def detectar_colision_total_modular(esferas_globales, radio):
         # Comparar el eslabón i con todos los eslabones posteriores j > i
         for j in range(i + 1, num_eslabones):
             
+            ## <---- ACA SE TIENE QUE PONER LA CONDICION DE LA MATRIZ DE COLISIONES ---> ## 
+            ## if (matriz_colisiones[i][j] == 0):  ##
+            ## continue  ##
+            ## else ##
+            
             esf_i = esferas_globales[i]
             esf_j = esferas_globales[j]
             
@@ -113,8 +118,9 @@ def calcular_configuracion_modular(angulos_grados, esferas_locales, radio):
     # Iteramos sobre todos los eslabones (las juntas)
     for i, angulo in enumerate(angulos_grados):
         
-
-        # Matriz que transforma cualquier punto del eslabon i al marco global desde el punto del eslabón (después del offset)
+        
+        
+        # Matriz que transforma cualquier punto del eslabon i al marco global desde el punto del eslabón 
         M_eslabon = M_acum @ Rfix[i] @ matriz_rotacion_z(angulo)
         # Obtenemos las posiciones globales de las esferas del eslabón i con M_link
         esf_global_i = np.array([
@@ -122,10 +128,9 @@ def calcular_configuracion_modular(angulos_grados, esferas_locales, radio):
             for p_local in esferas_locales[i]
         ])
         esferas_globales.append(esf_global_i)
-        print(f"valor de i {i}°")
         # Actualizamos M_acum para que represente la pose del FINAL de la junta i 
         vector_desplazamiento = SALTO_ESLABONES[i]
-        # Le aplico la traslación a M_link para obtener el nuevo M_acum
+        # Le aplico la traslación para obtener el nuevo M_acum
         M_acum = M_eslabon @ matriz_traslacion(*vector_desplazamiento)
 
 
