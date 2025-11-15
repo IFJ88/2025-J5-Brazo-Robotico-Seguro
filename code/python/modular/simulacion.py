@@ -12,7 +12,7 @@ from visualizacion import (
     finalizar_visualizacion,
     visualizar_plot_unico  # <--- Función para modo estático
 )
-from intermediario import mapeo_angulo_esp32
+##from intermediario import mapeo_angulo_esp32
 
 # Definición de la función interactiva
 def simulacion_manual(N_eslabones, angulos_actuales, esferas_base):

@@ -34,16 +34,16 @@ ANGULO_FIJO_ESLABON_4 = 0
 # ANGULOS_E4 = np.linspace(0, 180, 5)
 
 # Lista que indica el minimo angulo que puede tomar cada servo
-min_angulos = np.array([0, 0, -170, -1, -90])
+min_angulos = np.array([0, 0, -170, -1, 0])
 # Lista que indica el maximo angulo que puede tomar cada servo
-max_angulos = np.array([170, 135, 0, -1, 90])
+max_angulos = np.array([170, 135, 0, -1, 180])
 
 # --- 2. VECTORES DE DESPLAZAMIENTO (FIN DEL ESLABÓN EN EL MARCO LOCAL) --- #
 
 # Los vectores V_i definen la posición del punto final de cada eslabón i en su marco local.
 # Las constantes L_i son las longitudes de cada eslabón (norma de V_i).
 
-SALTO_0 = np.array([0.0, 0.0, 3.7])  # Salto del eslabón base
+SALTO_0 = np.array([0.0, 0.0, 3])  # Salto del eslabón base
 
 # SALTO_1 = np.array([2.3, 0.0, 1.5])  # Salto del eslabón 1
 SALTO_1 = np.array([2.3, 0, 0.0])  # Salto del eslabón 1 (Y se vuelve -Z)
@@ -52,7 +52,7 @@ SALTO_1 = np.array([2.3, 0, 0.0])  # Salto del eslabón 1 (Y se vuelve -Z)
 SALTO_2 = np.array([6.9, 0.0, 0.0])  # Salto del eslabón 2
 
 # SALTO_3 = np.array([5.7, 3.0, 0.0])  # Salto del eslabón 3
-SALTO_3 = np.array([0.0, 3.0, -3.0]) # (X se vuelve Z)
+SALTO_3 = np.array([0.0, 0.0, -3.0]) # (X se vuelve Z)
 
 # SALTO_4 = np.array([2.2, 0, 0])  # Salto del eslabón 4 (herramienta)
 SALTO_4 = np.array([0.0, 0.0, 2.0])  # (X se vuelve -Z)
@@ -84,7 +84,7 @@ esf_3 = np.array([[0.0, 0.0, 0.0]])
 # Eslabón 4: Una esfera al final
 esf_4 = np.array([
     [0, 0.0, 0.0],
-    [2.0, 0.0, 0.0]
+    [0, -2.0, 0.0]
 ])
 
 esferas_local = [esf_0, esf_1, esf_2, esf_3, esf_4]
