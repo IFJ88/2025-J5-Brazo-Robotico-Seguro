@@ -74,9 +74,9 @@ def detectar_colision_total_modular(esferas_globales, radio):
         for j in range(i + 1, num_eslabones):
             
             ## <---- ACA SE TIENE QUE PONER LA CONDICION DE LA MATRIZ DE COLISIONES ---> ## 
-            # if MATRIZ_COLISIONES[i, j] == 0:
-            #     print(f"Omitiendo chequeo entre Eslabón {i} y Eslabón {j} (MATRIZ_COLISIONES[i, j] = 0)")
-            #     continue
+            if MATRIZ_COLISIONES[i, j] == 0:
+                print(f"Omitiendo chequeo entre Eslabón {i} y Eslabón {j} (MATRIZ_COLISIONES[i, j] = 0)")
+                continue
             
             esf_i = esferas_globales[i]
             esf_j = esferas_globales[j]

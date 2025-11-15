@@ -12,9 +12,9 @@ T_BASE_GLOBAL = np.array([0, 0, 0]) # indica la posición de la base del robot e
 # 1 -> Colisionan; 0 -> No colisionan
 MATRIZ_COLISIONES = np.array([
     [ 0, 0, 0, 0, 1], # Eslabón 0
-    [ 0, 0, 0, 0, 1], # Eslabón 1
-    [ 0, 0, 0, 1, 0], # Eslabón 2
-    [ 0, 0, 1, 0, 0], # Eslabón 3
+    [ 0, 0, 1, 0, 1], # Eslabón 1
+    [ 0, 1, 0, 0, 0], # Eslabón 2
+    [ 0, 0, 0, 0, 0], # Eslabón 3
     [ 1, 1, 0, 0, 0]  # Eslabón 4
 ])
 
@@ -27,16 +27,16 @@ ANGULO_FIJO_ESLABON_3 = 0
 ANGULO_FIJO_ESLABON_4 = 0 
 
 # Lista de 5 angulos entre 0 y 180 para realizar un barrido/sampling
-ANGULOS_E0 = np.linspace(0, 180, 5) 
-ANGULOS_E1 = np.linspace(0, -135, 5)
-ANGULOS_E2 = np.linspace(0, 180, 5) 
-ANGULOS_E3 = np.linspace(0, 180, 5) 
-ANGULOS_E4 = np.linspace(0, 180, 5)
+# ANGULOS_E0 = np.linspace(0, 180, 5) 
+# ANGULOS_E1 = np.linspace(0, -135, 5)
+# ANGULOS_E2 = np.linspace(0, 180, 5) 
+# ANGULOS_E3 = np.linspace(0, 180, 5) 
+# ANGULOS_E4 = np.linspace(0, 180, 5)
 
 # Lista que indica el minimo angulo que puede tomar cada servo
-min_angulos = np.array([0, -135, 0, -1,0])
+min_angulos = np.array([0, 0, -170, -1, -90])
 # Lista que indica el maximo angulo que puede tomar cada servo
-max_angulos = np.array([170, 0, 170, -1, 170])
+max_angulos = np.array([170, 135, 0, -1, 90])
 
 # --- 2. VECTORES DE DESPLAZAMIENTO (FIN DEL ESLABÓN EN EL MARCO LOCAL) --- #
 
@@ -46,7 +46,7 @@ max_angulos = np.array([170, 0, 170, -1, 170])
 SALTO_0 = np.array([0.0, 0.0, 3.7])  # Salto del eslabón base
 
 # SALTO_1 = np.array([2.3, 0.0, 1.5])  # Salto del eslabón 1
-SALTO_1 = np.array([-2.3, 1.5, 0.0])  # Salto del eslabón 1 (Y se vuelve -Z)
+SALTO_1 = np.array([2.3, 0, 0.0])  # Salto del eslabón 1 (Y se vuelve -Z)
 
 # SALTO_2 = np.array([6.9, 0.0, 0.0])  # Salto del eslabón 2
 SALTO_2 = np.array([6.9, 0.0, 0.0])  # Salto del eslabón 2
@@ -68,7 +68,7 @@ esf_0 = np.array([
 # Eslabón 1: Solo una esfera en el "codo" (que no es el final)
 esf_1 = np.array([
     [0.0, 0.0, 0.0],
-    [-2.0, 1.5, 0.0]
+    [2, 0, 0.0]
 ])
 
 # Eslabón 2: Tres esferas (inicio, medio, fin)

@@ -4,7 +4,7 @@ import numpy as np
 import sys # Importar sys para salir del script
 
 # Importar las funciones y constantes de los módulos
-from configuracion import RADIO_ESFERA, esferas_local, ANGULO_FIJO_ESLABON_0, ANGULO_FIJO_ESLABON_1, ANGULO_FIJO_ESLABON_2, ANGULO_FIJO_ESLABON_3, ANGULO_FIJO_ESLABON_4, MODO_DINAMICO, ANGULOS_E0, ANGULOS_E1, ANGULOS_E2, ANGULOS_E3, ANGULOS_E4, min_angulos, max_angulos
+from configuracion import RADIO_ESFERA, esferas_local, ANGULO_FIJO_ESLABON_0, ANGULO_FIJO_ESLABON_1, ANGULO_FIJO_ESLABON_2, ANGULO_FIJO_ESLABON_3, ANGULO_FIJO_ESLABON_4, MODO_DINAMICO, min_angulos, max_angulos
 from cinematica import calcular_configuracion_modular, validador_limites_fisico
 from visualizacion import (
     inicializar_visualizacion,
@@ -12,20 +12,21 @@ from visualizacion import (
     finalizar_visualizacion,
     visualizar_plot_unico  # <--- Función para modo estático
 )
+from intermediario import mapeo_angulo_esp32
 
 # Definición de la función interactiva
 def simulacion_manual(N_eslabones, angulos_actuales, esferas_base):
     """Bucle principal de la simulación manual e interactiva."""
 
     # Creamos un array mutable para los ángulos
-    angulos_prueba = angulos_actuales.copy() 
+    angulos_actuales = angulos_actuales.copy() 
 
     while True:
         try:
             print("\n" + "="*50)
             print("🤖 **SIMULACIÓN INTERACTIVA**")
             print("-" * 50)
-            print(f"Ángulos actuales: {angulos_prueba.round(2)}°")
+            print(f"Ángulos actuales: {angulos_actuales.round(2)}°")
             print("Seleccione una opción:")
             print("  [0-4] : Eslabón (Junta) a rotar (0=Base, 4=Extremo)")
             print("  [e/E] : Salir")
@@ -46,19 +47,27 @@ def simulacion_manual(N_eslabones, angulos_actuales, esferas_base):
 
             # 2. Solicitar el nuevo ángulo
             print(f"\nJunta seleccionada: Eslabón {eslabon_idx} (Límites: {min_angulos[eslabon_idx]}° a {max_angulos[eslabon_idx]}°)")
-            angulo_nuevo = float(input(f"Ingrese el nuevo ángulo para el Eslabón {eslabon_idx}: "))
+            
+            ## DEBE SER LEIDO POR EL SERIAL PORT QUE OBTENGA DE LA ESP32
+            angulo_leido = float(input(f"Ingrese el nuevo ángulo para el Eslabón {eslabon_idx}: "))
+
+            ##angulo_nuevo = mapeo_angulo_esp32(eslabon_idx, angulo_leido)
+
+            angulo_nuevo=angulo_leido ## LUEGO SE BORRA ESTA LINEA
+            
+            print(f"angulo_nuevo:{angulo_nuevo}")
             
             # 3. Validar límites físicos
             if validador_limites_fisico(angulo_nuevo, min_angulos[eslabon_idx], max_angulos[eslabon_idx]):
                 print("❌ Operación cancelada: Ángulo fuera de los límites físicos.")
-                continue
+                continue            
 
             # 4. Aplicar el ángulo y calcular la nueva configuración
-            angulos_prueba[eslabon_idx] = angulo_nuevo # Modificar el ángulo en el array
+            angulos_actuales[eslabon_idx] = angulo_nuevo # Modificar el ángulo en el array
 
             print("\n... Calculando cinemática y colisiones ...")
             esf_rotado, colision, centros_colisionantes = calcular_configuracion_modular(
-                angulos_prueba, esferas_local, RADIO_ESFERA)
+                angulos_actuales, esferas_local, RADIO_ESFERA)
 
             # 5. Mostrar resultados y actualizar visualización
             print(f"RESULTADO: Eslabón {eslabon_idx} en {angulo_nuevo}°")
@@ -66,10 +75,10 @@ def simulacion_manual(N_eslabones, angulos_actuales, esferas_base):
 
             if MODO_DINAMICO:
                 actualizar_visualizacion_dinamica(
-                    esf_rotado, angulos_prueba, centros_colisionantes, eslabon_actual=eslabon_idx)
+                    esf_rotado, angulos_actuales, centros_colisionantes, eslabon_actual=eslabon_idx)
             else:
                 visualizar_plot_unico(
-                    esf_rotado, angulos_prueba, centros_colisionantes, esferas_base, eslabon_actual=eslabon_idx)
+                    esf_rotado, angulos_actuales, centros_colisionantes, esferas_base, eslabon_actual=eslabon_idx)
 
         except ValueError:
             print("⚠️ Entrada inválida. Por favor, ingrese un número entero para el eslabón o 'e' para salir, y un número para el ángulo.")
