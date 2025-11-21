@@ -33,13 +33,24 @@ const int POT_PIN  = 34;
 
 // ----------- Configuración de Servos (5 Eslabones) -----------
 const int SERVO_COUNT = 5;
-const int servoPins[SERVO_COUNT]  = {26, 19, 25, 18, 23};   
+const int servoPins[SERVO_COUNT]  = {26, 19, 25, 18, 23};
+
+// CON ESTO SE PUEDE CONTROLAR LOS VALORES FISICOS
 const int servoMinUs[SERVO_COUNT] = {400, 400, 500, 400, 400};
-const int servoMaxUs[SERVO_COUNT] = {2600,2600,2600,2200,2600};
+const int servoMaxUs[SERVO_COUNT] = {2600,1700,2600,2200,2600};
+// --- PULSOS DE HOME PARA CADA SERVO (FÁCILMENTE CONFIGURABLES) ---
+int servoHomePulse[SERVO_COUNT] = {
+    0,   // Servo 0
+    1700,   // Servo 1
+    1600,   // Servo 2
+    0,   // Servo 3
+    0    // Servo 4
+};
 
 // ================== CONSTANTES DE CONTROL ==================
 const float ALPHA = 0.25f;       // suavizado exponencial ADC
 const int   DEADZONE_US = 150;    
+const int SYNC_TOLERANCE_US = 200;
 const int   DEBOUNCE_MS = 50;    
 
 // ---- Tabla de calibración (us -> grados) ----
@@ -223,6 +234,39 @@ void handleDataRequest() {
 }
 
 
+// ======================================================
+// =========== FUNCIÓN PARA LLEVAR A POSICIÓN HOME =======
+// ======================================================
+void home() {
+    Serial.println("\n--- Moviendo todos los servos a POSICIÓN HOME ---");
+
+    for (int i = 0; i < SERVO_COUNT; i++) {
+
+        int pulse = servoHomePulse[i];
+
+        // Asegurar que cae dentro del rango del servo
+        if (pulse < servoMinUs[i]) pulse = servoMinUs[i];
+        if (pulse > servoMaxUs[i]) pulse = servoMaxUs[i];
+
+        // Convertir a ángulo usando tu LUT
+        float ang = angleFromPulseUS(pulse);
+        if (i == 2 || i == 3) {
+            ang = -1 * ang;   // Tu corrección especial
+        }
+
+        // Guardar en el estado global
+        currentPulse[i] = pulse;
+        angulos_grados[i] = ang;
+
+        // Mover el servo
+        servos[i].writeMicroseconds(pulse);
+
+        Serial.printf("Servo %d -> HomePulse=%dus | Ang=%.1f°\n", i, pulse, ang);
+    }
+
+    Serial.println("--- POSICIÓN HOME COMPLETADA ---\n");
+}
+
 // ================== SETUP ==================
 
 void setup() {
@@ -297,45 +341,47 @@ void setup() {
     centros_colisionantes.count = 0;
     for(int j = 0; j < N_eslabones; j++) esferas_base[j] = NULL;
 
-    bool colision_base = calcular_configuracion_modular(
-        angulos_base, 
-        esferas_local, 
-        RADIO_ESFERA, 
-        esferas_base, 
-        &centros_colisionantes
-    );
+    home();
+
+    // bool colision_base = calcular_configuracion_modular(
+    //     angulos_base, 
+    //     esferas_local, 
+    //     RADIO_ESFERA, 
+    //     esferas_base, 
+    //     &centros_colisionantes
+    // );
     
-    // Lógica del if colision_base: sys.exit()
-    // if (colision_base) {
-    //     Serial.println("¡Error Crítico! Colisión detectada en la posición base. Terminando simulación.");
-    //     // Liberar memoria asignada antes de salir
-    //     if (centros_colisionantes.coords != NULL) free(centros_colisionantes.coords);
-    //     for(int j = 0; j < N_eslabones; j++) {
-    //         if (esferas_base[j] != NULL) free((void*)esferas_base[j]);
-    //     }
-    //     // En un ESP32, exit() o un loop infinito es la forma de "salir" de un error crítico.
-    //     while(1) { 
-    //         delay(100); 
-    //         Serial.println("TERMINADO POR ERROR CRÍTICO.");
-    //     } 
-    // } else {
-        Serial.println("Base OK.");
-    //}
+    // // Lógica del if colision_base: sys.exit()
+    // // if (colision_base) {
+    // //     Serial.println("¡Error Crítico! Colisión detectada en la posición base. Terminando simulación.");
+    // //     // Liberar memoria asignada antes de salir
+    // //     if (centros_colisionantes.coords != NULL) free(centros_colisionantes.coords);
+    // //     for(int j = 0; j < N_eslabones; j++) {
+    // //         if (esferas_base[j] != NULL) free((void*)esferas_base[j]);
+    // //     }
+    // //     // En un ESP32, exit() o un loop infinito es la forma de "salir" de un error crítico.
+    // //     while(1) { 
+    // //         delay(100); 
+    // //         Serial.println("TERMINADO POR ERROR CRÍTICO.");
+    // //     } 
+    // // } else {
+    //     Serial.println("Base OK.");
+    // //}
     
-    // Si la base es OK, actualizamos los ángulos globales con la posición base fija
-    memcpy(angulos_grados, angulos_base, sizeof(double) * SERVO_COUNT);
+    // // Si la base es OK, actualizamos los ángulos globales con la posición base fija
+    // memcpy(angulos_grados, angulos_base, sizeof(double) * SERVO_COUNT);
     
-    // Intentamos mover los servos a la posición base real (conversión de ángulo a pulso)
-    for (int i = 0; i < SERVO_COUNT; i++) {
-        // Asumiendo que la función inversa (angle -> pulse) se haría con interpolación inversa.
-        // Por simplicidad, aquí usamos un placeholder.
-        // int pulse_base = mapeo_angulo_a_pulso(angulos_base[i]); 
-        // servos[i].writeMicroseconds(pulse_base);
+    // // Intentamos mover los servos a la posición base real (conversión de ángulo a pulso)
+    // for (int i = 0; i < SERVO_COUNT; i++) {
+    //     // Asumiendo que la función inversa (angle -> pulse) se haría con interpolación inversa.
+    //     // Por simplicidad, aquí usamos un placeholder.
+    //     // int pulse_base = mapeo_angulo_a_pulso(angulos_base[i]); 
+    //     // servos[i].writeMicroseconds(pulse_base);
         
-        // **IMPORTANTE**: Liberar la memoria de esferas_base después del chequeo de colisión
-        if (esferas_base[i] != NULL) free((void*)esferas_base[i]);
-    }
-    if (centros_colisionantes.coords != NULL) free(centros_colisionantes.coords);
+    //     // **IMPORTANTE**: Liberar la memoria de esferas_base después del chequeo de colisión
+    //     if (esferas_base[i] != NULL) free((void*)esferas_base[i]);
+    // }
+    // if (centros_colisionantes.coords != NULL) free(centros_colisionantes.coords);
 
 
     Serial.println("Usa BTN_NEXT/PREV para cambiar de eslabón.");
@@ -371,6 +417,16 @@ void loop() {
     int desiredPulse = map((int)filteredAdc, 0, 4095, min_us, max_us);
 
     int check = abs(desiredPulse - currentPulse[i]);
+
+    // CHEQUEO DE SINCRONIZACIÓN BASADA EN PULSOS (µs)
+    // ----------------------------------------------------
+    // Compara el pulso deseado (lectura del POT) con el último pulso actual (servo)
+    if (check > SYNC_TOLERANCE_US) {
+        
+        Serial.printf("Eslabón %d: DESINCRONIZADO! Mover POT a %dus\n", i, currentPulse[i]);
+        
+        return; 
+    }
 
     // 4. Chequear Zona Muerta
     if (check >= DEADZONE_US) {

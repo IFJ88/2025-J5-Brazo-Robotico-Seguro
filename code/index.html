@@ -7,10 +7,15 @@
         body { margin: 0; }
         canvas { display: block; }
         #info {
-            position: absolute; top: 10px; left: 10px; color: white; 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            color: white; 
             background: rgba(0, 0, 0, 0.7); 
-            padding: 10px; 
+            padding: 15px; 
             font-family: monospace;
+            font-size: 16px; 
+            line-height: 1.6; 
             z-index: 100;
         }
     </style>
@@ -42,22 +47,24 @@
         directionalLight.position.set(5, 10, 7.5);
         scene.add(directionalLight);
 
-        // Plano base
-        const planeGeometry = new THREE.PlaneGeometry(30, 30);
+        // Plano base (Suelo)
+        const planeGeometry = new THREE.PlaneGeometry(40, 40); // Aumento del tamaño del suelo
         const planeMaterial = new THREE.MeshPhongMaterial({ color: 0x666666, side: THREE.DoubleSide });
         const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 
-        // Ajuste: el plano ahora debe estar en Y=0 (horizontal)
-        plane.rotation.x = -Math.PI / 2;
+        // Alineación: Rotar 90° en X para que sea horizontal (XZ).
+        plane.rotation.x = Math.PI / 2; // Corregido el signo a positivo para una rotación estándar.
+        plane.position.y = 0; // El suelo debe estar en Y=0.
         scene.add(plane);
 
-        // ✔ Vista perpendicular al plano Y (frontal)
-        camera.position.set(0, 0, 25);
-        camera.lookAt(0, 0, 0);
+        // ✔ VISTA AMIGABLE: Posición Isométrica Superior (Zoom y ángulo)
+        camera.position.set(0, 5, 15); // Vista en diagonal (X, Y, Z positivos)
+        camera.lookAt(0, 5, 0); // Mirar a la base del robot (X=0, Z=0) a una altura de Y=5.
 
         let spheresGroup = new THREE.Group();
         scene.add(spheresGroup);
-
+        
+        // Renderización de Esferas
         function updateScene(data) {
             spheresGroup.clear();
 
@@ -65,7 +72,7 @@
             const servoIndex = data.active_servo_index || 0;
 
             document.getElementById('info').innerHTML = 
-                `🤖 Servo Activo: Eslabón ${servoIndex}<br>` +
+                `🤖 **Servo Activo:** Eslabón ${servoIndex}<br>` +
                 `Estado: ${isColliding ? '<span style="color:red">¡COLISIÓN!</span>' : '<span style="color:green">OK</span>'}<br>` +
                 `Ángulos: ${data.angles.map(a => a.toFixed(1)).join(', ')}`;
 
@@ -80,7 +87,9 @@
                 eslabon.forEach(center => {
                     const [x_sim, y_sim, z_sim] = center;
 
-                    // ✔ Conversión: Z → Y
+                    // ✔ CONVERSIÓN DE EJES (CLAVE): 
+                    // Z_sim (Altura Robótica) -> Y_3JS (Altura Gráfica)
+                    // Y_sim (Profundidad Robótica) -> Z_3JS (Profundidad Gráfica)
                     const x = x_sim;
                     const y = z_sim;
                     const z = y_sim;
@@ -89,7 +98,7 @@
                     const centerString = center.map(v => v.toFixed(6)).join(',');
 
                     if (isColliding && collidingCenters.includes(centerString)) {
-                         color = COLLISION_COLOR;
+                             color = COLLISION_COLOR;
                     }
 
                     const sphere = new THREE.Mesh(
@@ -97,7 +106,7 @@
                         new THREE.MeshPhongMaterial({ color })
                     );
 
-                    // ✔ Usar la conversión correcta
+                    // Aplicar la conversión
                     sphere.position.set(x, y, z);
                     spheresGroup.add(sphere);
                 });
@@ -108,7 +117,8 @@
             fetch('http://192.168.0.193/data')
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-                    return response.json();
+                    // Usar .text() primero para depurar si hay errores de JSON
+                    return response.json(); 
                 })
                 .then(updateScene)
                 .catch(e => {
