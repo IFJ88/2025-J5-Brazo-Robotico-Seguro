@@ -21,11 +21,7 @@ const int ANGULO_FIJO_ESLABON_0 = 0;
 const int ANGULO_FIJO_ESLABON_1 = 0; 
 const int ANGULO_FIJO_ESLABON_2 = 0; 
 const int ANGULO_FIJO_ESLABON_3 = 0;
-const int ANGULO_FIJO_ESLABON_4 = 0; 
-
-// Lista de límites angulares
-const double min_angulos[5] = {0.0, 0.0, -170.0, -1.0, 0.0};
-const double max_angulos[5] = {170.0, 135.0, 0.0, -1.0, 180.0};
+const int ANGULO_FIJO_ESLABON_4 = 0;
 
 // --- 2. VECTORES DE DESPLAZAMIENTO --- //
 const Vector3D SALTO_0 = {0.0, 0.0, 3.0};

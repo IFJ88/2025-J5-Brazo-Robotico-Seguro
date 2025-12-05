@@ -33,18 +33,18 @@ const int POT_PIN  = 34;
 
 // ----------- Configuración de Servos (5 Eslabones) -----------
 const int SERVO_COUNT = 5;
-const int servoPins[SERVO_COUNT]  = {26, 19, 25, 18, 23};
+const int servoPins[SERVO_COUNT]  = {18, 19, 21, 22, 23};
 
 // CON ESTO SE PUEDE CONTROLAR LOS VALORES FISICOS
-const int servoMinUs[SERVO_COUNT] = {400, 400, 500, 400, 400};
-const int servoMaxUs[SERVO_COUNT] = {2600,1700,2600,2200,2600};
+const int servoMinUs[SERVO_COUNT] = {400, 400, 400, 400, 400};
+const int servoMaxUs[SERVO_COUNT] = {2600,2600, 2600,2200,2600};
 // --- PULSOS DE HOME PARA CADA SERVO (FÁCILMENTE CONFIGURABLES) ---
 int servoHomePulse[SERVO_COUNT] = {
-    0,   // Servo 0
-    1700,   // Servo 1
-    1600,   // Servo 2
-    0,   // Servo 3
-    0    // Servo 4
+    400,   // Servo 0
+    2200,   // Servo 1
+    1200,   // Servo 2
+    600,   // Servo 3
+    400    // Servo 4
 };
 
 // ================== CONSTANTES DE CONTROL ==================
@@ -60,13 +60,28 @@ struct CalibPoint {
 };
 
 CalibPoint LUT[] = {
-    {1000,   0.0},
-    {1250,  45.0},
-    {1500,  90.0},
-    {1750, 135.0},
-    {2000, 180.0}
+    {400,   0.0},   // Inicio
+    {767,  30.0},
+    {1134,  60.0},
+    {1501,  90.0},  // Punto central (similar al 1500 original)
+    {1868, 120.0},
+    {2235, 150.0},
+    {2600, 180.0}   // Final
 };
+
 const int LUT_SIZE = sizeof(LUT)/sizeof(LUT[0]);
+
+CalibPoint LUT2[] = {
+    {400,   180.0},   // Inicio
+    {767,  150.0},
+    {1134, 120.0},
+    {1501,  90.0},  // Punto central (similar al 1500 original)
+    {1868, 60.0},
+    {2235, 30.0},
+    {2600, 0.0}   // Final
+};
+
+const int LUT_SIZE2 = sizeof(LUT2)/sizeof(LUT2[0]);
 
 // ================== ESTADO GLOBAL DEL ROBOT ==================
 Servo servos[SERVO_COUNT];
@@ -96,7 +111,47 @@ float angleFromPulseUS(int us) {
         int   x1 = LUT[i+1].us;
         float y0 = LUT[i].deg;
         float y1 = LUT[i+1].deg;
-        if (us >= x0 && us <= x1) {
+            float t = float(us - x0) / float(x1 - x0);
+            return y0 + t * (y1 - y0);
+    }
+    return NAN;
+}
+
+float getAngleForServo(int servo_idx, int us) {
+    
+    // Si el servo_idx es 2 (Servo 2), usamos LUT2 para la interpolación.
+    if (servo_idx == 2) {
+        // Ejecutar la interpolación con LUT2 y LUT_SIZE2
+        const CalibPoint* local_lut = LUT2;
+        const int local_lut_size = LUT_SIZE2;
+
+        if (us <= local_lut[0].us)   return local_lut[0].deg;
+        if (us >= local_lut[local_lut_size - 1].us) return local_lut[local_lut_size - 1].deg;
+        
+        for (int i = 0; i < local_lut_size - 1; i++) {
+            int   x0 = local_lut[i].us;
+            int   x1 = local_lut[i+1].us;
+            float y0 = local_lut[i].deg;
+            float y1 = local_lut[i+1].deg;
+            float t = float(us - x0) / float(x1 - x0);
+            return y0 + t * (y1 - y0);
+        }
+    }
+    
+    // Para todos los demás servos (0, 1, 3, 4, etc.), usa la LUT original.
+    else {
+        // Usar la función original con LUT y LUT_SIZE
+        const CalibPoint* local_lut = LUT;
+        const int local_lut_size = LUT_SIZE;
+        
+        if (us <= local_lut[0].us)   return local_lut[0].deg;
+        if (us >= local_lut[local_lut_size - 1].us) return local_lut[local_lut_size - 1].deg;
+
+        for (int i = 0; i < local_lut_size - 1; i++) {
+            int   x0 = local_lut[i].us;
+            int   x1 = local_lut[i+1].us;
+            float y0 = local_lut[i].deg;
+            float y1 = local_lut[i+1].deg;
             float t = float(us - x0) / float(x1 - x0);
             return y0 + t * (y1 - y0);
         }
@@ -249,8 +304,9 @@ void home() {
         if (pulse > servoMaxUs[i]) pulse = servoMaxUs[i];
 
         // Convertir a ángulo usando tu LUT
-        float ang = angleFromPulseUS(pulse);
-        if (i == 2 || i == 3) {
+        // float ang = angleFromPulseUS(pulse);
+        float ang = getAngleForServo(i, pulse);
+        if (i == 0 || i == 2) {
             ang = -1 * ang;   // Tu corrección especial
         }
 
@@ -260,8 +316,10 @@ void home() {
 
         // Mover el servo
         servos[i].writeMicroseconds(pulse);
-
+        Serial.println("--- POSICIÓN HOME PROCESOOOO ---\n");
         Serial.printf("Servo %d -> HomePulse=%dus | Ang=%.1f°\n", i, pulse, ang);
+        delay(300);  // deja que ese servo llegue antes de pasar al siguiente
+
     }
 
     Serial.println("--- POSICIÓN HOME COMPLETADA ---\n");
@@ -308,7 +366,8 @@ void setup() {
         currentPulse[i] = servoMinUs[i]; 
         //servos[i].writeMicroseconds(currentPulse[i]);
         //servos_idle(); --> funcion que lleva a los servos a la posicion idle
-        angulos_grados[i] = angleFromPulseUS(currentPulse[i]);
+        // angulos_grados[i] = angleFromPulseUS(currentPulse[i]);
+        angulos_grados[i] = getAngleForServo(i, currentPulse[i]);
     }
     
     // Inicialización del ADC para el filtro
@@ -343,46 +402,21 @@ void setup() {
 
     home();
 
-    // bool colision_base = calcular_configuracion_modular(
-    //     angulos_base, 
-    //     esferas_local, 
-    //     RADIO_ESFERA, 
-    //     esferas_base, 
-    //     &centros_colisionantes
-    // );
-    
-    // // Lógica del if colision_base: sys.exit()
-    // // if (colision_base) {
-    // //     Serial.println("¡Error Crítico! Colisión detectada en la posición base. Terminando simulación.");
-    // //     // Liberar memoria asignada antes de salir
-    // //     if (centros_colisionantes.coords != NULL) free(centros_colisionantes.coords);
-    // //     for(int j = 0; j < N_eslabones; j++) {
-    // //         if (esferas_base[j] != NULL) free((void*)esferas_base[j]);
-    // //     }
-    // //     // En un ESP32, exit() o un loop infinito es la forma de "salir" de un error crítico.
-    // //     while(1) { 
-    // //         delay(100); 
-    // //         Serial.println("TERMINADO POR ERROR CRÍTICO.");
-    // //     } 
-    // // } else {
-    //     Serial.println("Base OK.");
-    // //}
-    
-    // // Si la base es OK, actualizamos los ángulos globales con la posición base fija
-    // memcpy(angulos_grados, angulos_base, sizeof(double) * SERVO_COUNT);
-    
-    // // Intentamos mover los servos a la posición base real (conversión de ángulo a pulso)
-    // for (int i = 0; i < SERVO_COUNT; i++) {
-    //     // Asumiendo que la función inversa (angle -> pulse) se haría con interpolación inversa.
-    //     // Por simplicidad, aquí usamos un placeholder.
-    //     // int pulse_base = mapeo_angulo_a_pulso(angulos_base[i]); 
-    //     // servos[i].writeMicroseconds(pulse_base);
-        
-    //     // **IMPORTANTE**: Liberar la memoria de esferas_base después del chequeo de colisión
-    //     if (esferas_base[i] != NULL) free((void*)esferas_base[i]);
-    // }
-    // if (centros_colisionantes.coords != NULL) free(centros_colisionantes.coords);
+    // =========================================================================
+    // ** MODIFICACIÓN CLAVE PARA SINCRONIZAR EL POTENCIÓMETRO **
+    // Después de home(), el pulso del servo activo está en currentPulse[activeServo].
+    // Necesitamos que filteredAdc (y por lo tanto desiredPulse) esté cerca de ese valor.
+    // =========================================================================
+    int home_pulse_active = currentPulse[activeServo]; // Obtener el pulso Home del servo 0 (activo inicial)
+    int min_us_active = servoMinUs[activeServo];
+    int max_us_active = servoMaxUs[activeServo];
 
+    // Mapeo inverso: Pulso (min_us -> max_us) -> ADC (0 -> 4095)
+    // Esto establece el filtro a un valor que corresponde al pulso actual del servo.
+    int adc_home = map(home_pulse_active, min_us_active, max_us_active, 0, 4095);
+    filteredAdc = (float)adc_home;
+    Serial.printf("Potenciómetro sincronizado con Home del Eslabón %d (GPIO%d): ADC inicial = %d\n", activeServo, servoPins[activeServo], adc_home);
+    // =========================================================================
 
     Serial.println("Usa BTN_NEXT/PREV para cambiar de eslabón.");
     Serial.printf("Servo activo inicial -> %d (GPIO%d)\n", activeServo, servoPins[activeServo]);
@@ -431,9 +465,10 @@ void loop() {
     // 4. Chequear Zona Muerta
     if (check >= DEADZONE_US) {
         // 5. Mapear Pulso -> Ángulo Propuesto
-        float angulo_propuesto = angleFromPulseUS(desiredPulse);
+        // float angulo_propuesto = angleFromPulseUS(desiredPulse);
+        float angulo_propuesto = getAngleForServo(i, desiredPulse);
 
-        if (i == 2 || i == 3){
+        if (i == 0 || i == 2){
             angulo_propuesto = -1*angulo_propuesto;
         }
 
