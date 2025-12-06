@@ -37,13 +37,13 @@ const int servoPins[SERVO_COUNT]  = {18, 19, 21, 22, 23};
 
 // CON ESTO SE PUEDE CONTROLAR LOS VALORES FISICOS
 const int servoMinUs[SERVO_COUNT] = {400, 400, 400, 400, 400};
-const int servoMaxUs[SERVO_COUNT] = {2600,2600, 2600,2200,2600};
+const int servoMaxUs[SERVO_COUNT] = {2600,1800, 2600,2000,2600};
 // --- PULSOS DE HOME PARA CADA SERVO (FÁCILMENTE CONFIGURABLES) ---
 int servoHomePulse[SERVO_COUNT] = {
     400,   // Servo 0
-    2200,   // Servo 1
+    1400,   // Servo 1
     1200,   // Servo 2
-    600,   // Servo 3
+    960,   // Servo 3
     400    // Servo 4
 };
 
@@ -51,7 +51,8 @@ int servoHomePulse[SERVO_COUNT] = {
 const float ALPHA = 0.25f;       // suavizado exponencial ADC
 const int   DEADZONE_US = 150;    
 const int SYNC_TOLERANCE_US = 200;
-const int   DEBOUNCE_MS = 50;    
+const int   DEBOUNCE_MS = 50;   
+const int STEP_SIZE_US = 20;
 
 // ---- Tabla de calibración (us -> grados) ----
 struct CalibPoint {
@@ -59,7 +60,7 @@ struct CalibPoint {
     float deg;
 };
 
-CalibPoint LUT[] = {
+CalibPoint LUT_GENERICO[] = {
     {400,   0.0},   // Inicio
     {767,  30.0},
     {1134,  60.0},
@@ -69,7 +70,19 @@ CalibPoint LUT[] = {
     {2600, 180.0}   // Final
 };
 
-const int LUT_SIZE = sizeof(LUT)/sizeof(LUT[0]);
+const int LUT_SIZE = sizeof(LUT_GENERICO)/sizeof(LUT_GENERICO[0]);
+
+CalibPoint LUT1[] = {
+    {400,   0.0},   // Inicio
+    {800,  30.0},
+    {1000,  60.0},
+    {1100,  90.0},  // Punto central (similar al 1500 original)
+    {1200, 120.0},
+    {1500, 150.0},
+    {1800, 180.0}   // Final
+};
+
+const int LUT_SIZE1 = sizeof(LUT1)/sizeof(LUT1[0]);
 
 CalibPoint LUT2[] = {
     {400,   180.0},   // Inicio
@@ -82,6 +95,18 @@ CalibPoint LUT2[] = {
 };
 
 const int LUT_SIZE2 = sizeof(LUT2)/sizeof(LUT2[0]);
+
+CalibPoint LUT3[] = {
+    {400,   0.0},   // Inicio
+    {500,  30.0},
+    {600,  60.0},
+    {900, 90.0},   // Punto central: (400 + 2100) / 2 = 1250 us
+    {1300, 120.0},
+    {1700, 150.0},
+    {2000, 180.0}   // Final ajustado a 2100 us
+};
+
+const int LUT_SIZE3 = sizeof(LUT3) / sizeof(LUT3[0]);
 
 // ================== ESTADO GLOBAL DEL ROBOT ==================
 Servo servos[SERVO_COUNT];
@@ -103,60 +128,61 @@ unsigned long lastDebouncePrev = 0;
 
 // ================== UTILITARIOS ==================
 
-float angleFromPulseUS(int us) {
-    if (us <= LUT[0].us)   return LUT[0].deg;
-    if (us >= LUT[LUT_SIZE-1].us) return LUT[LUT_SIZE-1].deg;
-    for (int i = 0; i < LUT_SIZE-1; i++) {
-        int   x0 = LUT[i].us;
-        int   x1 = LUT[i+1].us;
-        float y0 = LUT[i].deg;
-        float y1 = LUT[i+1].deg;
-            float t = float(us - x0) / float(x1 - x0);
-            return y0 + t * (y1 - y0);
-    }
-    return NAN;
-}
-
 float getAngleForServo(int servo_idx, int us) {
     
-    // Si el servo_idx es 2 (Servo 2), usamos LUT2 para la interpolación.
+    // 1. Declaración de Punteros (Deben estar fuera del if/else para ser accesibles)
+    const CalibPoint* local_lut;
+    int local_lut_size;
+    
+    // 2. Selección de la LUT (Corregida la lógica)
     if (servo_idx == 2) {
-        // Ejecutar la interpolación con LUT2 y LUT_SIZE2
-        const CalibPoint* local_lut = LUT2;
-        const int local_lut_size = LUT_SIZE2;
-
-        if (us <= local_lut[0].us)   return local_lut[0].deg;
-        if (us >= local_lut[local_lut_size - 1].us) return local_lut[local_lut_size - 1].deg;
+        // Servo 2 usa LUT2 (Invertida)
+        local_lut = LUT2;
+        local_lut_size = LUT_SIZE2;
         
-        for (int i = 0; i < local_lut_size - 1; i++) {
+    } else if (servo_idx == 1) { 
+        // Servo 1 usa LUT1 (Calibración específica)
+        local_lut = LUT1;
+        local_lut_size = LUT_SIZE1;
+        
+    } else if (servo_idx == 3) { 
+        // Servo 1 usa LUT1 (Calibración específica)
+        local_lut = LUT3;
+        local_lut_size = LUT_SIZE3;
+        
+    }else {
+        // Todos los demás (0, 3, 4) usan la LUT original
+        local_lut = LUT_GENERICO;
+        local_lut_size = LUT_SIZE;
+    }
+
+    // --- Lógica de Interpolación (Unificada) ---
+    
+    // 3. Chequeo de límites (Extrapolación)
+    if (us <= local_lut[0].us) {
+        return local_lut[0].deg;
+    }
+    if (us >= local_lut[local_lut_size - 1].us) {
+        return local_lut[local_lut_size - 1].deg;
+    }
+    
+    // 4. Búsqueda por interpolación lineal
+    for (int i = 0; i < local_lut_size - 1; i++) {
+        // La condición de parada puede ser: si el pulso 'us' es menor
+        // que el siguiente punto (x1), entonces está en este segmento.
+        if (us < local_lut[i+1].us) {
             int   x0 = local_lut[i].us;
             int   x1 = local_lut[i+1].us;
             float y0 = local_lut[i].deg;
             float y1 = local_lut[i+1].deg;
-            float t = float(us - x0) / float(x1 - x0);
+            
+            // Cálculo de interpolación lineal: y = y0 + t * (y1 - y0)
+            float t = (float)(us - x0) / (float)(x1 - x0);
             return y0 + t * (y1 - y0);
         }
     }
     
-    // Para todos los demás servos (0, 1, 3, 4, etc.), usa la LUT original.
-    else {
-        // Usar la función original con LUT y LUT_SIZE
-        const CalibPoint* local_lut = LUT;
-        const int local_lut_size = LUT_SIZE;
-        
-        if (us <= local_lut[0].us)   return local_lut[0].deg;
-        if (us >= local_lut[local_lut_size - 1].us) return local_lut[local_lut_size - 1].deg;
-
-        for (int i = 0; i < local_lut_size - 1; i++) {
-            int   x0 = local_lut[i].us;
-            int   x1 = local_lut[i+1].us;
-            float y0 = local_lut[i].deg;
-            float y1 = local_lut[i+1].deg;
-            float t = float(us - x0) / float(x1 - x0);
-            return y0 + t * (y1 - y0);
-        }
-    }
-    return NAN;
+    return NAN; // Debería ser inalcanzable si la LUT está completa y ordenada
 }
 
 // Función de Antirrebote (Debounce)
@@ -304,8 +330,12 @@ void home() {
         if (pulse > servoMaxUs[i]) pulse = servoMaxUs[i];
 
         // Convertir a ángulo usando tu LUT
-        // float ang = angleFromPulseUS(pulse);
         float ang = getAngleForServo(i, pulse);
+
+        if (i == 3) {
+            ang -= 90.0f; // Aplica offset: 0..180 -> -90..90
+        }
+
         if (i == 0 || i == 2) {
             ang = -1 * ang;   // Tu corrección especial
         }
@@ -363,10 +393,7 @@ void setup() {
     for (int i = 0; i < SERVO_COUNT; i++) {
         servos[i].setPeriodHertz(50); 
         servos[i].attach(servoPins[i], servoMinUs[i], servoMaxUs[i]);
-        currentPulse[i] = servoMinUs[i]; 
-        //servos[i].writeMicroseconds(currentPulse[i]);
-        //servos_idle(); --> funcion que lleva a los servos a la posicion idle
-        // angulos_grados[i] = angleFromPulseUS(currentPulse[i]);
+        currentPulse[i] = servoMinUs[i];
         angulos_grados[i] = getAngleForServo(i, currentPulse[i]);
     }
     
@@ -465,8 +492,11 @@ void loop() {
     // 4. Chequear Zona Muerta
     if (check >= DEADZONE_US) {
         // 5. Mapear Pulso -> Ángulo Propuesto
-        // float angulo_propuesto = angleFromPulseUS(desiredPulse);
         float angulo_propuesto = getAngleForServo(i, desiredPulse);
+
+        if (i == 3) {
+            angulo_propuesto -= 90.0f; // Aplica offset: 0..180 -> -90..90
+        }
 
         if (i == 0 || i == 2){
             angulo_propuesto = -1*angulo_propuesto;
