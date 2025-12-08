@@ -26,8 +26,8 @@ const int ANGULO_FIJO_ESLABON_4 = 0;
 // --- 2. VECTORES DE DESPLAZAMIENTO --- //
 const Vector3D SALTO_0 = {0.0, 0.0, 3.0};
 const Vector3D SALTO_1 = {3.3, 0.0, 0.0};
-const Vector3D SALTO_2 = {4.0, 1.0, 0.0};
-const Vector3D SALTO_3 = {0.0, 0.0, -3.0}; 
+const Vector3D SALTO_2 = {4.0, 0.5, 0.0};
+const Vector3D SALTO_3 = {0.0, 0.0, -2.0}; 
 const Vector3D SALTO_4 = {0.0, 0.0, 2.0}; 
 
 const Vector3D *SALTO_ESLABONES[5] = {&SALTO_0, &SALTO_1, &SALTO_2, &SALTO_3, &SALTO_4};
@@ -42,15 +42,14 @@ const EsferaE0 esf_0 = {
 // esf_1 = np.array([ [0.0, 0.0, 0.0], [2, 0, 0.0] ])
 const EsferaE1 esf_1 = {
     {0.0, 0.0, 0.0},
-    {2.0, 0.0, 0.0},
-    {3.0, 0.0, 0.0}
+    {2.0, 0.0, 0.0}
 };
 
 // esf_2 = np.array([ [0.0, 0.0, 0.0], [3.0, 0.0, 0.0], [5.0, 0.0, 0.0] ])
 const EsferaE2 esf_2 = {
     {0.0, 0.0, 0.0},
-    {2.0, 1.0, 0.0},
-    {4.0, 1.0, 0.0}
+    {2.0, 0.5, 0.0},
+    {4.0, 0.5, 0.0}
 };
 
 // esf_3 = np.array([[0.0, 0.0, 0.0]])
